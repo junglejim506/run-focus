@@ -636,6 +636,13 @@
                         <button class="session-btn" data-type="long">LONG 15M</button>
                         <button class="session-btn" data-type="custom">CUSTOM</button>
                     </div>
+
+                    <div style="margin-top: 15px; text-align: center;">
+                        <label style="font-size: 0.8rem; color: #00ff41;">
+                            <input type="checkbox" id="alarmEnabled" checked style="margin-right: 5px;">
+                            AUDIO ALARM
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -785,6 +792,7 @@
 
             complete() {
                 this.pause();
+                this.playAlarm();
                 this.showNotification();
             }
 
@@ -831,6 +839,70 @@
                         icon: '🍅'
                     });
                 }
+            }
+
+            playAlarm() {
+                // Create a futuristic beep alarm using Web Audio API
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    
+                    // Create a sequence of beeps
+                    this.playBeepSequence(audioContext, [
+                        { freq: 800, duration: 0.2, delay: 0 },
+                        { freq: 600, duration: 0.2, delay: 0.3 },
+                        { freq: 800, duration: 0.2, delay: 0.6 },
+                        { freq: 1000, duration: 0.4, delay: 0.9 }
+                    ]);
+                } catch (error) {
+                    // Fallback to browser alert if Web Audio API fails
+                    console.log('Audio alarm failed, using fallback');
+                    this.playFallbackAlarm();
+                }
+            }
+
+            playBeepSequence(audioContext, beeps) {
+                beeps.forEach(beep => {
+                    setTimeout(() => {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.frequency.setValueAtTime(beep.freq, audioContext.currentTime);
+                        oscillator.type = 'square'; // Retro computer beep sound
+                        
+                        // Envelope for smooth attack/release
+                        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                        gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + beep.duration);
+                        
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + beep.duration);
+                    }, beep.delay * 1000);
+                });
+            }
+
+            playFallbackAlarm() {
+                // Create a simple repeating beep using setTimeout
+                let beepCount = 0;
+                const maxBeeps = 4;
+                
+                const beepInterval = setInterval(() => {
+                    // Flash the timer display
+                    this.timerDisplay.style.color = '#ff0000';
+                    this.timerLabel.textContent = '⚠ SESSION COMPLETE ⚠';
+                    
+                    setTimeout(() => {
+                        this.timerDisplay.style.color = '#00ff41';
+                        this.updateLabel();
+                    }, 200);
+                    
+                    beepCount++;
+                    if (beepCount >= maxBeeps) {
+                        clearInterval(beepInterval);
+                    }
+                }, 500);
             }
         }
 
