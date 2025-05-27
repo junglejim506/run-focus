@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FOCUS.EXE - Terminal Productivity Suite</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Courier+Prime:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier Prime', monospace;
+            background: #0a0a0a;
+            color: #00ff41;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 255, 65, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 255, 65, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(0, 255, 65, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border: 2px solid #00ff41;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            box-shadow: 
+                0 0 20px rgba(0, 255, 65, 0.3),
+                inset 0 0 20px rgba(0, 255, 65, 0.1);
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 3.5rem;
+            font-weight: 900;
+            margin-bottom: 10px;
+            text-shadow: 
+                0 0 10px #00ff41,
+                0 0 20px #00ff41,
+                0 0 30px #00ff41;
+            letter-spacing: 3px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #00ff41;
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .terminal-window {
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #00ff41;
+            border-radius: 8px;
+            padding: 0;
+            box-shadow: 
+                0 0 30px rgba(0, 255, 65, 0.4),
+                inset 0 0 30px rgba(0, 255, 65, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            background: #00ff41;
+            color: #000;
+            padding: 8px 15px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .terminal-header::before {
+            content: '●●●';
+            color: #000;
+            font-size: 1.2rem;
+        }
+
+        .terminal-content {
+            padding: 25px;
+            min-height: 400px;
+        }
+
+        .terminal-prompt {
+            color: #00ff41;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .terminal-prompt::before {
+            content: '> ';
+            color: #00ff41;
+        }
+
+        /* Pomodoro Timer Styles */
+        .timer-display {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .timer-frame {
+            width: 200px;
+            height: 140px;
+            border: 2px solid #00ff41;
+            margin: 0 auto 20px;
+            position: relative;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 
+                0 0 15px rgba(0, 255, 65, 0.5),
+                inset 0 0 15px rgba(0, 255, 65, 0.1);
+        }
+
+        .timer-screen {
+            text-align: center;
+        }
+
+        .timer-time {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #00ff41;
+            text-shadow: 0 0 10px #00ff41;
+            margin-bottom: 5px;
+        }
+
+        .timer-label {
+            font-size: 0.8rem;
+            color: #00ff41;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(0, 255, 65, 0.2);
+            border-radius: 2px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #00ff41;
+            width: 0%;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px #00ff41;
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .terminal-btn {
+            background: transparent;
+            border: 1px solid #00ff41;
+            color: #00ff41;
+            padding: 8px 16px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            border-radius: 0;
+        }
+
+        .terminal-btn:hover {
+            background: #00ff41;
+            color: #000;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.6);
+        }
+
+        .terminal-btn.active {
+            background: #00ff41;
+            color: #000;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.6);
+        }
+
+        .session-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .session-btn {
+            background: transparent;
+            border: 1px solid rgba(0, 255, 65, 0.5);
+            color: #00ff41;
+            padding: 6px 8px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.7rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            border-radius: 0;
+        }
+
+        .session-btn:hover,
+        .session-btn.active {
+            border-color: #00ff41;
+            background: rgba(0, 255, 65, 0.1);
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+        }
+
+        /* Todo List Styles */
+        .todo-input {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .terminal-input {
+            flex: 1;
+            background: transparent;
+            border: 1px solid #00ff41;
+            color: #00ff41;
+            padding: 10px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.9rem;
+            outline: none;
+            border-radius: 0;
+        }
+
+        .terminal-input::placeholder {
+            color: rgba(0, 255, 65, 0.5);
+        }
+
+        .terminal-input:focus {
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.4);
+        }
+
+        .add-btn {
+            background: #00ff41;
+            border: none;
+            color: #000;
+            padding: 10px 16px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .add-btn:hover {
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.8);
+        }
+
+        .todo-list {
+            max-height: 280px;
+            overflow-y: auto;
+        }
+
+        .todo-item {
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            border-radius: 0;
+            padding: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(0, 255, 65, 0.02);
+            transition: all 0.3s ease;
+        }
+
+        .todo-item:hover {
+            border-color: #00ff41;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+        }
+
+        .todo-item.completed {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+
+        .todo-checkbox {
+            width: 16px;
+            height: 16px;
+            border: 1px solid #00ff41;
+            background: transparent;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .todo-checkbox.checked {
+            background: #00ff41;
+        }
+
+        .todo-checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #000;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .todo-text {
+            flex: 1;
+            font-size: 0.9rem;
+        }
+
+        .delete-btn {
+            background: transparent;
+            border: 1px solid #ff0000;
+            color: #ff0000;
+            padding: 4px 8px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.7rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .todo-item:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .delete-btn:hover {
+            background: #ff0000;
+            color: #000;
+        }
+
+        /* Audio Generator Styles */
+        .audio-terminal {
+            grid-column: 1 / -1;
+        }
+
+        .audio-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .preset-section h4 {
+            color: #00ff41;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 1rem;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .preset-btn {
+            background: transparent;
+            border: 1px solid rgba(0, 255, 65, 0.5);
+            color: #00ff41;
+            padding: 10px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .preset-btn:hover,
+        .preset-btn.active {
+            border-color: #00ff41;
+            background: rgba(0, 255, 65, 0.1);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+        }
+
+        .controls-section h4 {
+            color: #00ff41;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 1rem;
+        }
+
+        .frequency-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .frequency-control {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .frequency-control label {
+            font-size: 0.9rem;
+            color: #00ff41;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .terminal-slider {
+            width: 100%;
+            height: 6px;
+            background: rgba(0, 255, 65, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+            border-radius: 0;
+        }
+
+        .terminal-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #00ff41;
+            cursor: pointer;
+            border-radius: 0;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.6);
+        }
+
+        .terminal-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #00ff41;
+            cursor: pointer;
+            border: none;
+            border-radius: 0;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.6);
+        }
+
+        .play-control {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .play-btn {
+            background: transparent;
+            border: 2px solid #00ff41;
+            color: #00ff41;
+            padding: 15px 30px;
+            font-family: 'Orbitron', monospace;
+            font-size: 1.1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .play-btn:hover {
+            background: #00ff41;
+            color: #000;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.8);
+        }
+
+        .play-btn.playing {
+            background: #ff0000;
+            border-color: #ff0000;
+            color: #fff;
+        }
+
+        .play-btn.playing:hover {
+            background: #ff0000;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #00ff41;
+            border-radius: 0;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 65, 0.8);
+        }
+
+        /* Matrix-style animation */
+        .matrix-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.1;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .app-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .audio-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .timer-frame {
+                width: 160px;
+                height: 120px;
+            }
+            
+            .timer-time {
+                font-size: 1.8rem;
+            }
+
+            .session-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Glowing effects */
+        .glow {
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41, 0 0 15px #00ff41;
+            }
+            to {
+                text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41, 0 0 30px #00ff41;
+            }
+        }
+
+        /* Terminal cursor blink */
+        .cursor::after {
+            content: '_';
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="glow">FOCUS.EXE</h1>
+            <p>[ TERMINAL PRODUCTIVITY SUITE v2.1 ]</p>
+        </div>
+
+        <div class="app-grid">
+            <!-- Pomodoro Timer -->
+            <div class="terminal-window">
+                <div class="terminal-header">
+                    <span>TIMER.SYS</span>
+                </div>
+                <div class="terminal-content">
+                    <div class="terminal-prompt">POMODORO PROTOCOL</div>
+                    
+                    <div class="timer-display">
+                        <div class="timer-frame">
+                            <div class="timer-screen">
+                                <div class="timer-time" id="timerDisplay">25:00</div>
+                                <div class="timer-label" id="timerLabel">FOCUS MODE</div>
+                            </div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                    </div>
+
+                    <div class="timer-controls">
+                        <button class="terminal-btn" id="startBtn">START</button>
+                        <button class="terminal-btn" id="pauseBtn">PAUSE</button>
+                        <button class="terminal-btn" id="resetBtn">RESET</button>
+                    </div>
+
+                    <div class="session-grid">
+                        <button class="session-btn active" data-type="focus">FOCUS 25M</button>
+                        <button class="session-btn" data-type="short">BREAK 5M</button>
+                        <button class="session-btn" data-type="long">LONG 15M</button>
+                        <button class="session-btn" data-type="custom">CUSTOM</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Todo List -->
+            <div class="terminal-window">
+                <div class="terminal-header">
+                    <span>TASK.MGR</span>
+                </div>
+                <div class="terminal-content">
+                    <div class="terminal-prompt">TASK MANAGER v1.0</div>
+                    
+                    <div class="todo-input">
+                        <input type="text" class="terminal-input" id="todoInput" placeholder="ENTER NEW TASK...">
+                        <button class="add-btn" id="addBtn">ADD</button>
+                    </div>
+                    
+                    <div class="todo-list" id="todoList">
+                        <!-- Todo items will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Binaural Beats Generator -->
+        <div class="terminal-window audio-terminal">
+            <div class="terminal-header">
+                <span>AUDIO.GEN</span>
+            </div>
+            <div class="terminal-content">
+                <div class="terminal-prompt">BINAURAL FREQUENCY GENERATOR</div>
+                
+                <div class="audio-content">
+                    <div class="preset-section">
+                        <h4>[ NEURAL PRESETS ]</h4>
+                        <div class="preset-grid">
+                            <button class="preset-btn" data-preset="focus">FOCUS 10Hz</button>
+                            <button class="preset-btn" data-preset="deep-focus">DEEP 20Hz</button>
+                            <button class="preset-btn" data-preset="creative">CREATE 6Hz</button>
+                            <button class="preset-btn" data-preset="relax">RELAX 8Hz</button>
+                        </div>
+                    </div>
+                    
+                    <div class="controls-section">
+                        <h4>[ FREQUENCY CONTROL ]</h4>
+                        <div class="frequency-controls">
+                            <div class="frequency-control">
+                                <label>BASE FREQ: <span id="baseFreqValue">440</span>Hz</label>
+                                <input type="range" class="terminal-slider" id="baseFreq" min="200" max="800" value="440">
+                            </div>
+                            <div class="frequency-control">
+                                <label>BEAT FREQ: <span id="beatFreqValue">10</span>Hz</label>
+                                <input type="range" class="terminal-slider" id="beatFreq" min="1" max="40" value="10">
+                            </div>
+                            <div class="frequency-control">
+                                <label>VOLUME: <span id="volumeValue">50</span>%</label>
+                                <input type="range" class="terminal-slider" id="volume" min="0" max="100" value="50">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="play-control">
+                    <button class="play-btn" id="playBtn">► INITIATE SEQUENCE</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Pomodoro Timer
+        class PomodoroTimer {
+            constructor() {
+                this.timeLeft = 25 * 60; // 25 minutes in seconds
+                this.totalTime = 25 * 60;
+                this.isRunning = false;
+                this.interval = null;
+                this.currentType = 'focus';
+                this.sessions = {
+                    focus: 25 * 60,
+                    short: 5 * 60,
+                    long: 15 * 60,
+                    custom: 25 * 60
+                };
+                
+                this.initializeElements();
+                this.updateDisplay();
+                this.updateProgress();
+            }
+
+            initializeElements() {
+                this.startBtn = document.getElementById('startBtn');
+                this.pauseBtn = document.getElementById('pauseBtn');
+                this.resetBtn = document.getElementById('resetBtn');
+                this.timerDisplay = document.getElementById('timerDisplay');
+                this.timerLabel = document.getElementById('timerLabel');
+                this.progressFill = document.getElementById('progressFill');
+                this.sessionBtns = document.querySelectorAll('.session-btn');
+
+                this.startBtn.addEventListener('click', () => this.start());
+                this.pauseBtn.addEventListener('click', () => this.pause());
+                this.resetBtn.addEventListener('click', () => this.reset());
+
+                this.sessionBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        if (e.target.dataset.type === 'custom') {
+                            const minutes = prompt('Enter custom duration (minutes):', '25');
+                            if (minutes && !isNaN(minutes)) {
+                                this.sessions.custom = parseInt(minutes) * 60;
+                                this.setSession('custom');
+                            }
+                        } else {
+                            this.setSession(e.target.dataset.type);
+                        }
+                        this.updateSessionButtons(e.target);
+                    });
+                });
+            }
+
+            start() {
+                if (!this.isRunning) {
+                    this.isRunning = true;
+                    this.startBtn.classList.add('active');
+                    this.interval = setInterval(() => {
+                        this.timeLeft--;
+                        this.updateDisplay();
+                        this.updateProgress();
+
+                        if (this.timeLeft <= 0) {
+                            this.complete();
+                        }
+                    }, 1000);
+                }
+            }
+
+            pause() {
+                this.isRunning = false;
+                this.startBtn.classList.remove('active');
+                clearInterval(this.interval);
+            }
+
+            reset() {
+                this.pause();
+                this.timeLeft = this.totalTime;
+                this.updateDisplay();
+                this.updateProgress();
+            }
+
+            complete() {
+                this.pause();
+                this.showNotification();
+            }
+
+            setSession(type) {
+                this.pause();
+                this.currentType = type;
+                this.timeLeft = this.sessions[type];
+                this.totalTime = this.sessions[type];
+                this.updateDisplay();
+                this.updateProgress();
+                this.updateLabel();
+            }
+
+            updateSessionButtons(activeBtn) {
+                this.sessionBtns.forEach(btn => btn.classList.remove('active'));
+                activeBtn.classList.add('active');
+            }
+
+            updateDisplay() {
+                const minutes = Math.floor(this.timeLeft / 60);
+                const seconds = this.timeLeft % 60;
+                this.timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            updateProgress() {
+                const progress = ((this.totalTime - this.timeLeft) / this.totalTime) * 100;
+                this.progressFill.style.width = `${progress}%`;
+            }
+
+            updateLabel() {
+                const labels = {
+                    focus: 'FOCUS MODE',
+                    short: 'SHORT BREAK',
+                    long: 'LONG BREAK',
+                    custom: 'CUSTOM MODE'
+                };
+                this.timerLabel.textContent = labels[this.currentType];
+            }
+
+            showNotification() {
+                if (Notification.permission === 'granted') {
+                    new Notification('FOCUS.EXE - Session Complete!', {
+                        body: 'Time to take a break or start the next session.',
+                        icon: '🍅'
+                    });
+                }
+            }
+        }
+
+        // Todo List
+        class TodoList {
+            constructor() {
+                this.todos = [];
+                this.todoInput = document.getElementById('todoInput');
+                this.addBtn = document.getElementById('addBtn');
+                this.todoList = document.getElementById('todoList');
+
+                this.addBtn.addEventListener('click', () => this.addTodo());
+                this.todoInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.addTodo();
+                });
+
+                this.render();
+            }
+
+            addTodo() {
+                const text = this.todoInput.value.trim();
+                if (text) {
+                    this.todos.push({
+                        id: Date.now(),
+                        text: text.toUpperCase(),
+                        completed: false
+                    });
+                    this.todoInput.value = '';
+                    this.render();
+                }
+            }
+
+            toggleTodo(id) {
+                const todo = this.todos.find(t => t.id === id);
+                if (todo) {
+                    todo.completed = !todo.completed;
+                    this.render();
+                }
+            }
+
+            deleteTodo(id) {
+                this.todos = this.todos.filter(t => t.id !== id);
+                this.render();
+            }
+
+            render() {
+                this.todoList.innerHTML = '';
+                this.todos.forEach(todo => {
+                    const todoElement = document.createElement('div');
+                    todoElement.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+                    todoElement.innerHTML = `
+                        <div class="todo-checkbox ${todo.completed ? 'checked' : ''}" onclick="todoList.toggleTodo(${todo.id})"></div>
+                        <div class="todo-text">${todo.text}</div>
+                        <button class="delete-btn" onclick="todoList.deleteTodo(${todo.id})">DEL</button>
+                    `;
+                    this.todoList.appendChild(todoElement);
+                });
+            }
+        }
+
+        // Binaural Beats Generator
+        class BinauralBeats {
+            constructor() {
+                this.audioContext = null;
+                this.leftOscillator = null;
+                this.rightOscillator = null;
+                this.gainNode = null;
+                this.isPlaying = false;
+
+                this.baseFreq = 440;
+                this.beatFreq = 10;
+                this.volume = 0.5;
+
+                this.initializeElements();
+                this.setupPresets();
+            }
+
+            initializeElements() {
+                this.playBtn = document.getElementById('playBtn');
+                this.baseFreqSlider = document.getElementById('baseFreq');
+                this.beatFreqSlider = document.getElementById('beatFreq');
+                this.volumeSlider = document.getElementById('volume');
+                this.baseFreqValue = document.getElementById('baseFreqValue');
+                this.beatFreqValue = document.getElementById('beatFreqValue');
+                this.volumeValue = document.getElementById('volumeValue');
+
+                this.playBtn.addEventListener('click', () => this.togglePlayback());
+                
+                this.baseFreqSlider.addEventListener('input', (e) => {
+                    this.baseFreq = parseInt(e.target.value);
+                    this.baseFreqValue.textContent = this.baseFreq;
+                    if (this.isPlaying) this.updateFrequencies();
+                });
+
+                this.beatFreqSlider.addEventListener('input', (e) => {
+                    this.beatFreq = parseInt(e.target.value);
+                    this.beatFreqValue.textContent = this.beatFreq;
+                    if (this.isPlaying) this.updateFrequencies();
+                });
+
+                this.volumeSlider.addEventListener('input', (e) => {
+                    this.volume = parseInt(e.target.value) / 100;
+                    this.volumeValue.textContent = parseInt(e.target.value);
+                    if (this.isPlaying) this.updateVolume();
+                });
+            }
+
+            setupPresets() {
+                const presetBtns = document.querySelectorAll('.preset-btn');
+                const presets = {
+                    focus: { base: 440, beat: 10 },
+                    'deep-focus': { base: 440, beat: 20 },
+                    creative: { base: 440, beat: 6 },
+                    relax: { base: 440, beat: 8 }
+                };
+
+                presetBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const preset = presets[e.target.dataset.preset];
+                        this.setPreset(preset.base, preset.beat);
+                        this.updatePresetButtons(e.target);
+                    });
+                });
+            }
+
+            setPreset(baseFreq, beatFreq) {
+                this.baseFreq = baseFreq;
+                this.beatFreq = beatFreq;
+                
+                this.baseFreqSlider.value = baseFreq;
+                this.beatFreqSlider.value = beatFreq;
+                this.baseFreqValue.textContent = baseFreq;
+                this.beatFreqValue.textContent = beatFreq;
+
+                if (this.isPlaying) {
+                    this.updateFrequencies();
+                }
+            }
+
+            updatePresetButtons(activeBtn) {
+                document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+                activeBtn.classList.add('active');
+            }
+
+            async togglePlayback() {
+                if (!this.isPlaying) {
+                    await this.startPlayback();
+                } else {
+                    this.stopPlayback();
+                }
+            }
+
+            async startPlayback() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    
+                    // Create oscillators
+                    this.leftOscillator = this.audioContext.createOscillator();
+                    this.rightOscillator = this.audioContext.createOscillator();
+                    
+                    // Create gain node for volume control
+                    this.gainNode = this.audioContext.createGain();
+                    
+                    // Create stereo panner for left/right separation
+                    this.leftPanner = this.audioContext.createStereoPanner();
+                    this.rightPanner = this.audioContext.createStereoPanner();
+                    
+                    this.leftPanner.pan.value = -1; // Full left
+                    this.rightPanner.pan.value = 1;  // Full right
+                    
+                    // Set frequencies
+                    this.leftOscillator.frequency.setValueAtTime(this.baseFreq, this.audioContext.currentTime);
+                    this.rightOscillator.frequency.setValueAtTime(this.baseFreq + this.beatFreq, this.audioContext.currentTime);
+                    
+                    // Set oscillator type
+                    this.leftOscillator.type = 'sine';
+                    this.rightOscillator.type = 'sine';
+                    
+                    // Connect nodes
+                    this.leftOscillator.connect(this.leftPanner);
+                    this.rightOscillator.connect(this.rightPanner);
+                    this.leftPanner.connect(this.gainNode);
+                    this.rightPanner.connect(this.gainNode);
+                    this.gainNode.connect(this.audioContext.destination);
+                    
+                    // Set volume
+                    this.gainNode.gain.setValueAtTime(this.volume, this.audioContext.currentTime);
+                    
+                    // Start oscillators
+                    this.leftOscillator.start();
+                    this.rightOscillator.start();
+                    
+                    this.isPlaying = true;
+                    this.playBtn.textContent = '◼ TERMINATE SEQUENCE';
+                    this.playBtn.classList.add('playing');
+                    
+                } catch (error) {
+                    console.error('Error starting audio:', error);
+                }
+            }
+
+            stopPlayback() {
+                if (this.leftOscillator) this.leftOscillator.stop();
+                if (this.rightOscillator) this.rightOscillator.stop();
+                if (this.audioContext) this.audioContext.close();
+                
+                this.isPlaying = false;
+                this.playBtn.textContent = '► INITIATE SEQUENCE';
+                this.playBtn.classList.remove('playing');
+            }
+
+            updateFrequencies() {
+                if (this.leftOscillator && this.rightOscillator) {
+                    this.leftOscillator.frequency.setValueAtTime(this.baseFreq, this.audioContext.currentTime);
+                    this.rightOscillator.frequency.setValueAtTime(this.baseFreq + this.beatFreq, this.audioContext.currentTime);
+                }
+            }
+
+            updateVolume() {
+                if (this.gainNode) {
+                    this.gainNode.gain.setValueAtTime(this.volume, this.audioContext.currentTime);
+                }
+            }
+        }
+
+        // Initialize the app
+        const pomodoroTimer = new PomodoroTimer();
+        const todoList = new TodoList();
+        const binauralBeats = new BinauralBeats();
+
+        // Request notification permission
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        // Add some terminal-style startup messages
+        console.log('FOCUS.EXE v2.1 - TERMINAL PRODUCTIVITY SUITE');
+        console.log('System initialized successfully...');
+        console.log('All modules loaded and ready for operation.');
+    </script>
+</body>
+</html>
