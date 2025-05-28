@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HABITS.SYS - Terminal Habit Tracker</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Courier+Prime:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier Prime', monospace;
+            background: #0a0a0a;
+            color: #00ff41;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 255, 65, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 255, 65, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(0, 255, 65, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 787.5px;
+            margin: 7.5px auto;
+            padding: 15px 1vw;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border: 2px solid #00ff41;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            box-shadow: 
+                0 0 11px rgba(0, 255, 65, 0.3),
+                inset 0 0 11px rgba(0, 255, 65, 0.1);
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 6px;
+            text-shadow: 
+                0 0 6px #00ff41,
+                0 0 10px #00ff41,
+                0 0 13px #00ff41;
+            letter-spacing: 1.5px;
+        }
+
+        .header p {
+            font-size: 0.7rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #00ff41;
+        }
+
+        .system-info {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 22px;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid #00ff41;
+            padding: 11px;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.2);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00ff41;
+            text-shadow: 0 0 7.5px #00ff41;
+        }
+
+        .stat-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.75px;
+            opacity: 0.8;
+            margin-top: 3.75px;
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 22px;
+            margin-bottom: 22px;
+        }
+
+        .terminal-window {
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #00ff41;
+            border-radius: 8px;
+            padding: 0;
+            box-shadow: 
+                0 0 22px rgba(0, 255, 65, 0.4),
+                inset 0 0 22px rgba(0, 255, 65, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            background: #00ff41;
+            color: #000;
+            padding: 6px 11px;
+            font-weight: bold;
+            font-size: 0.68rem;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.75px;
+        }
+
+        .terminal-header::before {
+            content: '●●●';
+            color: #000;
+            font-size: 1.2rem;
+        }
+
+        .terminal-content {
+            padding: 18px;
+            min-height: 300px;
+        }
+
+        .terminal-prompt {
+            color: #00ff41;
+            font-weight: bold;
+            margin-bottom: 11px;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .terminal-prompt::before {
+            content: '> ';
+            color: #00ff41;
+        }
+
+        .command-section {
+            margin-bottom: 25px;
+        }
+
+        .command-input {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .terminal-input {
+            flex: 1;
+            background: transparent;
+            border: 1px solid #00ff41;
+            color: #00ff41;
+            padding: 10px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.9rem;
+            outline: none;
+            border-radius: 0;
+        }
+
+        .terminal-input::placeholder {
+            color: rgba(0, 255, 65, 0.5);
+        }
+
+        .terminal-input:focus {
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.4);
+        }
+
+        .add-btn {
+            background: #00ff41;
+            border: none;
+            color: #000;
+            padding: 10px 16px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .add-btn:hover {
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.8);
+        }
+
+        .habits-list {
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .habit-item {
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            margin-bottom: 10px;
+            padding: 15px;
+            background: rgba(0, 255, 65, 0.02);
+            transition: all 0.3s ease;
+        }
+
+        .habit-item:hover {
+            border-color: #00ff41;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+        }
+
+        .habit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .habit-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+        }
+
+        .habit-streak {
+            font-size: 0.9rem;
+            color: #00ff41;
+            text-shadow: 0 0 5px #00ff41;
+        }
+
+        .habit-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .check-btn {
+            background: transparent;
+            border: 1px solid #4ade80;
+            color: #4ade80;
+            padding: 6px 12px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .check-btn:hover {
+            background: #4ade80;
+            color: #000;
+        }
+
+        .check-btn.completed {
+            background: #4ade80;
+            color: #000;
+        }
+
+        .delete-btn {
+            background: transparent;
+            border: 1px solid #ff0000;
+            color: #ff0000;
+            padding: 6px 12px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background: #ff0000;
+            color: #000;
+        }
+
+        .command-history {
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            font-size: 0.8rem;
+        }
+
+        .command-line {
+            margin-bottom: 5px;
+            opacity: 0.7;
+        }
+
+        .command-line:last-child {
+            opacity: 1;
+            color: #00ff41;
+        }
+
+        .command-line::before {
+            content: '$ ';
+            color: #00ff41;
+        }
+
+        @media (max-width: 1100px) {
+    .system-info {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 600px) {
+    .system-info {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+            .app-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .system-info {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+
+        .glow {
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41, 0 0 15px #00ff41;
+            }
+            to {
+                text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41, 0 0 30px #00ff41;
+            }
+        }
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #00ff41;
+            border-radius: 0;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 65, 0.8);
+        }
+        /* Matrix-style animation */
+        .matrix-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.1;
+        }
+        .return-terminal-wrapper {
+            display: flex;
+            justify-content: center;
+            margin: 24px 0 6px 0;
+        }
+        .return-terminal-btn {
+            background: #00ff41;
+            color: #000;
+            border: 2px solid #00ff41;
+            font-family: 'Orbitron', monospace;
+            font-weight: bold;
+            font-size: 1rem;
+            padding: 8px 28px;
+            border-radius: 6px;
+            text-decoration: none;
+            letter-spacing: 1.5px;
+            box-shadow: 0 0 12px #00ff41, 0 0 4px #00ff41 inset;
+            transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+        }
+        .return-terminal-btn:hover {
+            background: #000;
+            color: #00ff41;
+            box-shadow: 0 0 18px #00ff41, 0 0 6px #00ff41 inset;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="glow">HABITS.SYS</h1>
+            <p>[ TERMINAL HABIT TRACKING SYSTEM v1.2 ]</p>
+        </div>
+
+        <!-- System Stats -->
+        <div class="system-info">
+            <div class="stat-card">
+                <div class="stat-value" id="totalHabits">0</div>
+                <div class="stat-label">Total Habits</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="completedToday">0</div>
+                <div class="stat-label">Completed Today</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="longestStreak">0</div>
+                <div class="stat-label">Longest Streak</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="systemUptime">0</div>
+                <div class="stat-label">System Uptime (Days)</div>
+            </div>
+        </div>
+
+        <div class="app-grid">
+            <!-- Habit Management -->
+            <div class="terminal-window">
+                <div class="terminal-header">
+                    <span>HABIT.MGR</span>
+                </div>
+                <div class="terminal-content">
+                    <div class="terminal-prompt">HABIT MANAGEMENT PROTOCOL</div>
+                    
+                    <div class="command-section">
+                        <div class="command-input">
+                            <input type="text" class="terminal-input" id="habitInput" placeholder="add [habit_name]">
+                            <button class="add-btn" id="addHabitBtn">EXEC</button>
+                        </div>
+                        <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 15px;">
+                            Commands: add [name]<br>
+                            Example: add Exercise
+                        </div>
+                    </div>
+
+                    <div class="habits-list" id="habitsList">
+                        <div style="text-align: center; opacity: 0.6; padding: 40px;">
+                            <div>No habits in system</div>
+                            <div style="font-size: 0.8rem; margin-top: 10px;">Use 'add [habit_name]' to begin tracking</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Command Terminal -->
+            <div class="terminal-window">
+                <div class="terminal-header">
+                    <span>TERM.LOG</span>
+                </div>
+                <div class="terminal-content">
+                    <div class="terminal-prompt">SYSTEM LOG MONITOR</div>
+                    
+                    <div class="command-history" id="commandHistory">
+                        <div class="command-line">HABITS.SYS v1.2 initialized</div>
+                        <div class="command-line">Loading habit database...</div>
+                        <div class="command-line">System ready for input</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('HABITS.SYS v1.2 loading...');
+        
+        // Global variables
+        let habits = [];
+        let commandHistory = ['HABITS.SYS v1.2 initialized', 'Loading habit database...', 'System ready for input'];
+        let startDate = new Date();
+        
+        console.log('Variables initialized');
+
+        function addHabit() {
+            console.log('addHabit function called');
+            
+            const input = document.getElementById('habitInput');
+            const command = input.value.trim();
+            
+            console.log('Input value:', command);
+            
+            if (!command) {
+                console.log('Empty command');
+                return;
+            }
+            
+            // Add command to history
+            addCommandToHistory(`> ${command}`);
+            
+            if (command.toLowerCase().startsWith('add ')) {
+                const habitName = command.substring(4).trim();
+                console.log('Adding habit:', habitName);
+                
+                if (habitName) {
+                    const habit = {
+                        id: Date.now(),
+                        name: habitName.toUpperCase(),
+                        created: new Date(),
+                        streak: 0,
+                        longestStreak: 0,
+                        completions: [],
+                        lastCompleted: null
+                    };
+                    
+                    habits.push(habit);
+                    console.log('Habit added. Total habits:', habits.length);
+                    
+                    // Add success message to history
+                    addCommandToHistory(`✓ Habit "${habitName}" added to system`);
+                    
+                    // Clear input
+                    input.value = '';
+                    
+                    // Update all displays
+                    updateStats();
+                    updateHabitsList();
+                    updateReports();
+                    
+                } else {
+                    addCommandToHistory('✗ Error: Invalid habit name');
+                }
+            } else {
+                addCommandToHistory('✗ Error: Use format "add [habit_name]"');
+            }
+        }
+
+        function checkHabit(id) {
+            console.log('checkHabit called with ID:', id);
+            const habit = habits.find(h => h.id === id);
+            if (!habit) {
+                addCommandToHistory(`✗ Error: Habit ID ${id} not found`);
+                return;
+            }
+
+            const today = new Date().toDateString();
+            const alreadyCompleted = habit.completions.some(date => 
+                new Date(date).toDateString() === today
+            );
+
+            if (alreadyCompleted) {
+                addCommandToHistory(`⚠ Habit "${habit.name}" already completed today`);
+                return;
+            }
+
+            habit.completions.push(new Date());
+            habit.lastCompleted = new Date();
+            updateStreak(habit);
+            addCommandToHistory(`✓ Habit "${habit.name}" marked complete [+1 streak]`);
+            
+            updateStats();
+            updateHabitsList();
+            updateReports();
+        }
+
+        function removeHabit(id) {
+            console.log('removeHabit called with ID:', id);
+            const habitIndex = habits.findIndex(h => h.id === id);
+            if (habitIndex === -1) {
+                addCommandToHistory(`✗ Error: Habit ID ${id} not found`);
+                return;
+            }
+
+            const habitName = habits[habitIndex].name;
+            habits.splice(habitIndex, 1);
+            addCommandToHistory(`✓ Habit "${habitName}" removed from system`);
+            
+            updateStats();
+            updateHabitsList();
+            updateReports();
+        }
+
+        function updateStreak(habit) {
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            const completedYesterday = habit.completions.some(date => 
+                new Date(date).toDateString() === yesterday.toDateString()
+            );
+
+            if (completedYesterday || habit.streak === 0) {
+                habit.streak++;
+            } else {
+                habit.streak = 1;
+            }
+
+            habit.longestStreak = Math.max(habit.longestStreak, habit.streak);
+        }
+
+        function addCommandToHistory(message) {
+            commandHistory.push(message);
+            if (commandHistory.length > 10) {
+                commandHistory.shift();
+            }
+            
+            const historyEl = document.getElementById('commandHistory');
+            if (historyEl) {
+                historyEl.innerHTML = commandHistory.map(cmd => `<div class="command-line">${cmd}</div>`).join('');
+            }
+        }
+
+        function updateStats() {
+            // Update total habits
+            const totalHabitsEl = document.getElementById('totalHabits');
+            if (totalHabitsEl) totalHabitsEl.textContent = habits.length;
+            
+            // Update completed today
+            const today = new Date().toDateString();
+            const completedToday = habits.filter(habit => 
+                habit.completions.some(date => new Date(date).toDateString() === today)
+            ).length;
+            const completedTodayEl = document.getElementById('completedToday');
+            if (completedTodayEl) completedTodayEl.textContent = completedToday;
+
+            // Update longest streak
+            const longestStreak = habits.reduce((max, habit) => 
+                Math.max(max, habit.longestStreak), 0);
+            const longestStreakEl = document.getElementById('longestStreak');
+            if (longestStreakEl) longestStreakEl.textContent = longestStreak;
+
+            // Update system uptime
+            const now = new Date();
+            const diffTime = Math.abs(now - startDate);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            const systemUptimeEl = document.getElementById('systemUptime');
+            if (systemUptimeEl) systemUptimeEl.textContent = diffDays;
+        }
+
+        function updateHabitsList() {
+            const habitsList = document.getElementById('habitsList');
+            if (!habitsList) return;
+            
+            if (habits.length === 0) {
+                habitsList.innerHTML = `
+                    <div style="text-align: center; opacity: 0.6; padding: 40px;">
+                        <div>No habits in system</div>
+                        <div style="font-size: 0.8rem; margin-top: 10px;">Use 'add [habit_name]' to begin tracking</div>
+                    </div>
+                `;
+                return;
+            }
+
+            habitsList.innerHTML = habits.map(habit => {
+                const today = new Date().toDateString();
+                const completedToday = habit.completions.some(date => 
+                    new Date(date).toDateString() === today
+                );
+
+                const totalPossibleDays = Math.floor((new Date() - habit.created) / (1000 * 60 * 60 * 24)) + 1;
+                const completionRate = habit.completions.length / totalPossibleDays * 100;
+
+                return `
+                    <div class="habit-item">
+                        <div class="habit-header">
+                            <div class="habit-name">ID:${habit.id} | ${habit.name}</div>
+                            <div class="habit-streak">STREAK: ${habit.streak} DAYS</div>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <div style="font-size: 0.8rem; opacity: 0.8;">
+                                Completion Rate: ${completionRate.toFixed(1)}% | Total: ${habit.completions.length} | Best: ${habit.longestStreak} days
+                            </div>
+                        </div>
+                        <div class="habit-controls">
+                            <button class="check-btn ${completedToday ? 'completed' : ''}" 
+                                    onclick="checkHabit(${habit.id})"
+                                    ${completedToday ? 'disabled' : ''}>
+                                ${completedToday ? 'DONE' : 'CHECK'}
+                            </button>
+                            <button class="delete-btn" onclick="removeHabit(${habit.id})">
+                                DEL
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateReports() {
+            // Simple daily report for now
+            console.log('Reports updated');
+        }
+
+        // Wait for page to load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing HABITS.SYS...');
+            
+            const button = document.getElementById('addHabitBtn');
+            const input = document.getElementById('habitInput');
+            
+            if (button) {
+                console.log('✓ Button found, adding click handler');
+                button.addEventListener('click', function() {
+                    console.log('Button clicked!');
+                    addHabit();
+                });
+            } else {
+                console.log('✗ Button NOT found!');
+            }
+            
+            if (input) {
+                console.log('✓ Input found, adding Enter key handler');
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        console.log('Enter key pressed!');
+                        addHabit();
+                    }
+                });
+            } else {
+                console.log('✗ Input NOT found!');
+            }
+            
+            // Initialize displays
+            updateStats();
+            updateHabitsList();
+            
+            console.log('✓ HABITS.SYS fully initialized and ready for commands');
+        });
+
+        console.log('✓ Script loaded successfully');
+    </script>
+    <div class="return-terminal-wrapper">
+        <a href="index.html" class="return-terminal-btn">Return to Terminal</a>
+    </div>
+</body>
+</html>
