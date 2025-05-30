@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLOCK.SYNC - Terminal Time Awareness System</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Courier+Prime:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier Prime', monospace;
+            background: #0a0a0a;
+            color: #00ff41;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 255, 65, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 255, 65, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(0, 255, 65, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 787.5px;
+            margin: 7.5px auto;
+            padding: 15px 1vw;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border: 2px solid #00ff41;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            box-shadow: 
+                0 0 11px rgba(0, 255, 65, 0.3),
+                inset 0 0 11px rgba(0, 255, 65, 0.1);
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 6px;
+            text-shadow: 
+                0 0 6px #00ff41,
+                0 0 10px #00ff41,
+                0 0 13px #00ff41;
+            letter-spacing: 1.5px;
+        }
+
+        .header p {
+            font-size: 0.7rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #00ff41;
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 22.5px;
+            margin-bottom: 22.5px;
+        }
+
+        .terminal-window {
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #00ff41;
+            border-radius: 8px;
+            padding: 0;
+            box-shadow: 
+                0 0 16.5px rgba(0, 255, 65, 0.4),
+                inset 0 0 16.5px rgba(0, 255, 65, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            background: #00ff41;
+            color: #000;
+            padding: 6px 11px;
+            font-weight: bold;
+            font-size: 0.68rem;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.75px;
+        }
+
+        .terminal-header::before {
+            content: '●●●';
+            color: #000;
+            font-size: 1.2rem;
+        }
+
+        .terminal-content {
+            padding: 18px;
+            min-height: 400px;
+        }
+
+        .terminal-prompt {
+            color: #00ff41;
+            font-weight: bold;
+            margin-bottom: 11.25px;
+            font-size: 0.825rem;
+        }
+
+        .terminal-prompt::before {
+            content: '> ';
+            color: #00ff41;
+        }
+
+        /* Main Clock Display */
+        .main-clock {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            background: rgba(0, 255, 65, 0.02);
+        }
+
+        .local-time {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #00ff41;
+            text-shadow: 0 0 15px #00ff41;
+            margin-bottom: 5px;
+        }
+
+        .local-date {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .local-timezone {
+            font-size: 0.7rem;
+            opacity: 0.6;
+            margin-top: 5px;
+        }
+
+        /* World Clocks Grid */
+        .world-clocks {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .clock-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            background: rgba(0, 255, 65, 0.02);
+            transition: all 0.3s ease;
+        }
+
+        .clock-item:hover {
+            border-color: #00ff41;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+        }
+
+        .clock-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .city-name {
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: #00ff41;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .timezone-name {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+
+        .clock-time {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #00ff41;
+            text-shadow: 0 0 8px #00ff41;
+        }
+
+        .time-difference {
+            font-size: 0.6rem;
+            opacity: 0.6;
+            margin-top: 2px;
+            text-align: right;
+        }
+
+        /* Time Format Toggle */
+        .format-controls {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .format-btn {
+            background: transparent;
+            border: 1px solid rgba(0, 255, 65, 0.5);
+            color: #00ff41;
+            padding: 6px 12px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.7rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .format-btn:hover,
+        .format-btn.active {
+            border-color: #00ff41;
+            background: rgba(0, 255, 65, 0.1);
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+        }
+
+        /* Productivity Insights */
+        .productivity-insights {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            background: rgba(0, 255, 65, 0.02);
+        }
+
+        .insight-title {
+            font-weight: bold;
+            font-size: 0.8rem;
+            color: #00ff41;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .insight-item {
+            font-size: 0.7rem;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .insight-value {
+            color: #4ade80;
+            font-weight: bold;
+        }
+
+        /* Work Hours Indicator */
+        .work-hours {
+            margin-top: 15px;
+        }
+
+        .work-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4ade80;
+            box-shadow: 0 0 8px #4ade80;
+        }
+
+        .status-indicator.warning {
+            background: #fbbf24;
+            box-shadow: 0 0 8px #fbbf24;
+        }
+
+        .status-indicator.inactive {
+            background: #ef4444;
+            box-shadow: 0 0 8px #ef4444;
+        }
+
+        /* Meeting Scheduler Helper */
+        .meeting-helper {
+            margin-top: 20px;
+        }
+
+        .meeting-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .meeting-slot {
+            padding: 8px;
+            font-size: 0.7rem;
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            text-align: center;
+            background: rgba(0, 255, 65, 0.02);
+        }
+
+        .meeting-slot.good {
+            border-color: #4ade80;
+            color: #4ade80;
+        }
+
+        .meeting-slot.okay {
+            border-color: #fbbf24;
+            color: #fbbf24;
+        }
+
+        .meeting-slot.poor {
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        /* Full Width */
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .app-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .local-time {
+                font-size: 1.8rem;
+            }
+            
+            .clock-time {
+                font-size: 1.1rem;
+            }
+            
+            .meeting-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        .glow {
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41, 0 0 15px #00ff41;
+            }
+            to {
+                text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41, 0 0 30px #00ff41;
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .return-terminal-wrapper {
+            display: flex;
+            justify-content: center;
+            margin: 24px 0 6px 0;
+        }
+        .return-terminal-btn {
+            background: #00ff41;
+            color: #000;
+            border: 2px solid #00ff41;
+            font-family: 'Orbitron', monospace;
+            font-weight: bold;
+            font-size: 1rem;
+            padding: 8px 28px;
+            border-radius: 6px;
+            text-decoration: none;
+            letter-spacing: 1.5px;
+            box-shadow: 0 0 12px #00ff41, 0 0 4px #00ff41 inset;
+            transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+        }
+        .return-terminal-btn:hover {
+            background: #000;
+            color: #00ff41;
+            box-shadow: 0 0 18px #00ff41, 0 0 6px #00ff41 inset;
+        }
+        .terminal-footer-block {
+            text-align: center;
+            margin-top: 30px;
+            margin-bottom: 8px;
+            opacity: 0.6;
+            font-size: 0.8rem;
+        }
+        .matrix-cursor {
+            display: inline-block;
+            font-family: 'Orbitron', monospace;
+            color: #00ff41;
+            letter-spacing: 2px;
+            margin-bottom: 2px;
+        }
+        .matrix-cursor::after {
+            content: '_';
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        .terminal-footer-version {
+            margin-top: 8px;
+            color: #00ff41;
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 1.5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="glow">CLOCK.SYNC</h1>
+            <p>[ TERMINAL TIME AWARENESS SYSTEM v1.0 ]</p>
+        </div>
+
+        <div class="app-grid">
+            <!-- Local Time Display -->
+            <div class="terminal-window">
+                <div class="terminal-header">
+                    <span>LOCAL.TIME</span>
+                </div>
+                <div class="terminal-content">
+                    <div class="terminal-prompt">SYSTEM CLOCK DISPLAY</div>
+                    
+                    <div class="main-clock">
+                        <div class="local-time" id="localTime">12:00:00</div>
+                        <div class="local-date" id="localDate">LOADING...</div>
+                        <div class="local-timezone" id="localTimezone">DETECTING TIMEZONE...</div>
+                    </div>
+
+                    <div class="format-controls">
+                        <button class="format-btn active" id="format12">12 HOUR</button>
+                        <button class="format-btn" id="format24">24 HOUR</button>
+                        <button class="format-btn" id="formatSeconds">SECONDS</button>
+                    </div>
+
+                    <div class="productivity-insights">
+                        <div class="insight-title">SESSION ANALYTICS</div>
+                        <div class="insight-item">
+                            <span>SESSION TIME:</span>
+                            <span class="insight-value" id="sessionTime">00:00:00</span>
+                        </div>
+                        <div class="insight-item">
+                            <span>WORK HOURS TODAY:</span>
+                            <span class="insight-value" id="workHours">0h 0m</span>
+                        </div>
+                        <div class="insight-item">
+                            <span>CURRENT PHASE:</span>
+                            <span class="insight-value" id="currentPhase">MORNING</span>
+                        </div>
+                        <div class="insight-item">
+                            <span>OPTIMAL FOCUS:</span>
+                            <span class="insight-value" id="optimalFocus">HIGH</span>
+                        </div>
+                    </div>
+
+                    <div class="work-hours">
+                        <div class="work-status">
+                            <div class="status-indicator" id="workStatus"></div>
+                            <span id="workStatusText">Prime work hours</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- World Clocks -->
+            <div class="terminal-window">
+                <div class="terminal-header">
+                    <span>WORLD.TIME</span>
+                </div>
+                <div class="terminal-content">
+                    <div class="terminal-prompt">GLOBAL TIME SYNCHRONIZATION</div>
+                    
+                    <div class="world-clocks" id="worldClocks">
+                        <!-- Clocks will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Meeting Coordination -->
+            <div class="terminal-window full-width">
+                <div class="terminal-header">
+                    <span>MEETING.COORD</span>
+                </div>
+                <div class="terminal-content">
+                    <div class="terminal-prompt">GLOBAL MEETING COORDINATION ASSISTANT</div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <div class="insight-title">OPTIMAL MEETING TIMES</div>
+                            <div class="meeting-grid" id="meetingTimes">
+                                <!-- Meeting suggestions will be populated by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="insight-title">TIMEZONE CONSIDERATIONS</div>
+                            <div style="font-size: 0.7rem; line-height: 1.4;">
+                                <div style="margin-bottom: 8px;" id="timezoneInsight1">• Best overlap: 9-11 AM EST</div>
+                                <div style="margin-bottom: 8px;" id="timezoneInsight2">• Avoid: Early morning APAC</div>
+                                <div style="margin-bottom: 8px;" id="timezoneInsight3">• Europe evening optimal</div>
+                                <div style="margin-bottom: 8px;" id="timezoneInsight4">• US West Coast afternoon good</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ClockSync {
+            constructor() {
+                this.is24Hour = false;
+                this.showSeconds = true;
+                this.sessionStartTime = Date.now();
+                
+                this.timezones = [
+                    { city: 'NEW YORK', timezone: 'America/New_York', code: 'EST' },
+                    { city: 'LONDON', timezone: 'Europe/London', code: 'GMT' },
+                    { city: 'PARIS', timezone: 'Europe/Paris', code: 'CET' },
+                    { city: 'MOSCOW', timezone: 'Europe/Moscow', code: 'MSK' },
+                    { city: 'DUBAI', timezone: 'Asia/Dubai', code: 'GST' },
+                    { city: 'MUMBAI', timezone: 'Asia/Kolkata', code: 'IST' },
+                    { city: 'BEIJING', timezone: 'Asia/Shanghai', code: 'CST' },
+                    { city: 'TOKYO', timezone: 'Asia/Tokyo', code: 'JST' },
+                    { city: 'SYDNEY', timezone: 'Australia/Sydney', code: 'AEDT' },
+                    { city: 'LOS ANGELES', timezone: 'America/Los_Angeles', code: 'PST' }
+                ];
+
+                this.initializeElements();
+                this.updateAllClocks();
+                this.startClockUpdates();
+                this.generateMeetingTimes();
+            }
+
+            initializeElements() {
+                // Local time elements
+                this.localTime = document.getElementById('localTime');
+                this.localDate = document.getElementById('localDate');
+                this.localTimezone = document.getElementById('localTimezone');
+
+                // Format controls
+                this.format12Btn = document.getElementById('format12');
+                this.format24Btn = document.getElementById('format24');
+                this.formatSecondsBtn = document.getElementById('formatSeconds');
+
+                // Analytics elements
+                this.sessionTimeDisplay = document.getElementById('sessionTime');
+                this.workHoursDisplay = document.getElementById('workHours');
+                this.currentPhaseDisplay = document.getElementById('currentPhase');
+                this.optimalFocusDisplay = document.getElementById('optimalFocus');
+                this.workStatus = document.getElementById('workStatus');
+                this.workStatusText = document.getElementById('workStatusText');
+
+                // World clocks container
+                this.worldClocksContainer = document.getElementById('worldClocks');
+                this.meetingTimesContainer = document.getElementById('meetingTimes');
+
+                this.attachEventListeners();
+            }
+
+            attachEventListeners() {
+                this.format12Btn.addEventListener('click', () => {
+                    this.is24Hour = false;
+                    this.updateFormatButtons();
+                });
+
+                this.format24Btn.addEventListener('click', () => {
+                    this.is24Hour = true;
+                    this.updateFormatButtons();
+                });
+
+                this.formatSecondsBtn.addEventListener('click', () => {
+                    this.showSeconds = !this.showSeconds;
+                    this.formatSecondsBtn.classList.toggle('active');
+                });
+            }
+
+            updateFormatButtons() {
+                this.format12Btn.classList.toggle('active', !this.is24Hour);
+                this.format24Btn.classList.toggle('active', this.is24Hour);
+            }
+
+            formatTime(date, timezone = null) {
+                const options = {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: !this.is24Hour
+                };
+
+                if (this.showSeconds) {
+                    options.second = '2-digit';
+                }
+
+                // Only add timezone if it's provided and valid
+                if (timezone) {
+                    options.timeZone = timezone;
+                }
+
+                return date.toLocaleTimeString('en-US', options);
+            }
+
+            updateAllClocks() {
+                const now = new Date();
+                
+                // Update local time
+                this.localTime.textContent = this.formatTime(now);
+                this.localDate.textContent = now.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                }).toUpperCase();
+
+                // Get local timezone
+                const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                this.localTimezone.textContent = localTz;
+
+                // Update world clocks
+                this.updateWorldClocks(now);
+                
+                // Update analytics
+                this.updateAnalytics(now);
+            }
+
+            updateWorldClocks(now) {
+                this.worldClocksContainer.innerHTML = '';
+
+                this.timezones.forEach(tz => {
+                    const clockItem = document.createElement('div');
+                    clockItem.className = 'clock-item';
+
+                    try {
+                        const time = this.formatTime(now, tz.timezone);
+                        const timeDiff = this.getTimeDifference(now, tz.timezone);
+
+                        clockItem.innerHTML = `
+                            <div class="clock-info">
+                                <div class="city-name">${tz.city}</div>
+                                <div class="timezone-name">${tz.code}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div class="clock-time">${time}</div>
+                                <div class="time-difference">${timeDiff}</div>
+                            </div>
+                        `;
+                    } catch (error) {
+                        console.log(`Error with timezone ${tz.timezone}:`, error);
+                        clockItem.innerHTML = `
+                            <div class="clock-info">
+                                <div class="city-name">${tz.city}</div>
+                                <div class="timezone-name">${tz.code}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div class="clock-time">--:--</div>
+                                <div class="time-difference">ERROR</div>
+                            </div>
+                        `;
+                    }
+
+                    this.worldClocksContainer.appendChild(clockItem);
+                });
+            }
+
+            getTimeDifference(now, timezone) {
+                try {
+                    const localOffset = now.getTimezoneOffset();
+                    const targetTime = new Date(now.toLocaleString("en-US", {timeZone: timezone}));
+                    const targetOffset = (now.getTime() - targetTime.getTime()) / 60000;
+                    const diffMinutes = targetOffset + localOffset;
+                    const diffHours = Math.round(diffMinutes / 60);
+
+                    if (diffHours === 0) return 'SAME TIME';
+                    if (diffHours > 0) return `+${Math.abs(diffHours)}H`;
+                    return `-${Math.abs(diffHours)}H`;
+                } catch (error) {
+                    console.log('Timezone calculation error:', error);
+                    return 'TIME DIFF';
+                }
+            }
+
+            updateAnalytics(now) {
+                // Session time
+                const sessionDuration = now.getTime() - this.sessionStartTime;
+                const sessionHours = Math.floor(sessionDuration / (1000 * 60 * 60));
+                const sessionMinutes = Math.floor((sessionDuration % (1000 * 60 * 60)) / (1000 * 60));
+                const sessionSeconds = Math.floor((sessionDuration % (1000 * 60)) / 1000);
+                this.sessionTimeDisplay.textContent = `${sessionHours.toString().padStart(2, '0')}:${sessionMinutes.toString().padStart(2, '0')}:${sessionSeconds.toString().padStart(2, '0')}`;
+
+                // Work hours (simplified - assume 8 hours/day, started at session start)
+                this.workHoursDisplay.textContent = `${sessionHours}h ${sessionMinutes}m`;
+
+                // Current phase
+                const hour = now.getHours();
+                let phase, focus, status, statusText, statusClass;
+
+                if (hour >= 6 && hour < 12) {
+                    phase = 'MORNING';
+                    focus = 'HIGH';
+                    status = 'good';
+                    statusText = 'Prime work hours';
+                    statusClass = '';
+                } else if (hour >= 12 && hour < 14) {
+                    phase = 'LUNCH';
+                    focus = 'LOW';
+                    status = 'warning';
+                    statusText = 'Lunch break time';
+                    statusClass = 'warning';
+                } else if (hour >= 14 && hour < 18) {
+                    phase = 'AFTERNOON';
+                    focus = 'MEDIUM';
+                    status = 'good';
+                    statusText = 'Good focus hours';
+                    statusClass = '';
+                } else if (hour >= 18 && hour < 22) {
+                    phase = 'EVENING';
+                    focus = 'LOW';
+                    status = 'warning';
+                    statusText = 'Wind down time';
+                    statusClass = 'warning';
+                } else {
+                    phase = 'NIGHT';
+                    focus = 'CRITICAL';
+                    status = 'poor';
+                    statusText = 'Rest time';
+                    statusClass = 'inactive';
+                }
+
+                this.currentPhaseDisplay.textContent = phase;
+                this.optimalFocusDisplay.textContent = focus;
+                this.workStatusText.textContent = statusText;
+                this.workStatus.className = `status-indicator ${statusClass}`;
+            }
+
+            generateMeetingTimes() {
+                const now = new Date();
+                const currentHour = now.getHours();
+                
+                // Generate meeting time suggestions
+                const meetingSlots = [
+                    { time: '9:00 AM EST', quality: 'good', reason: 'Morning fresh' },
+                    { time: '10:00 AM EST', quality: 'good', reason: 'Global overlap' },
+                    { time: '2:00 PM EST', quality: 'okay', reason: 'After lunch' },
+                    { time: '3:00 PM EST', quality: 'good', reason: 'Afternoon peak' },
+                    { time: '8:00 AM PST', quality: 'okay', reason: 'West coast start' },
+                    { time: '6:00 PM GMT', quality: 'poor', reason: 'Europe evening' }
+                ];
+
+                this.meetingTimesContainer.innerHTML = '';
+                meetingSlots.forEach(slot => {
+                    const slotElement = document.createElement('div');
+                    slotElement.className = `meeting-slot ${slot.quality}`;
+                    slotElement.innerHTML = `
+                        <div style="font-weight: bold;">${slot.time}</div>
+                        <div style="font-size: 0.6rem; opacity: 0.8;">${slot.reason}</div>
+                    `;
+                    this.meetingTimesContainer.appendChild(slotElement);
+                });
+
+                // Update timezone insights based on current time
+                this.updateTimezoneInsights();
+            }
+
+            updateTimezoneInsights() {
+                const now = new Date();
+                const hour = now.getHours();
+                
+                const insights = [];
+                
+                if (hour >= 9 && hour <= 11) {
+                    insights.push('• Current time optimal for US meetings');
+                } else if (hour >= 14 && hour <= 16) {
+                    insights.push('• Good time for Europe collaboration');
+                } else {
+                    insights.push('• Consider async communication');
+                }
+                
+                insights.push('• Asia-Pacific: Early morning preferred');
+                insights.push('• Europe: Mid-morning to afternoon');
+                insights.push('• Americas: Avoid very early/late');
+
+                document.getElementById('timezoneInsight1').textContent = insights[0] || '• Best overlap: 9-11 AM EST';
+                document.getElementById('timezoneInsight2').textContent = insights[1] || '• Avoid: Early morning APAC';
+                document.getElementById('timezoneInsight3').textContent = insights[2] || '• Europe evening optimal';
+                document.getElementById('timezoneInsight4').textContent = insights[3] || '• US West Coast afternoon good';
+            }
+
+            startClockUpdates() {
+                // Update every second
+                setInterval(() => {
+                    this.updateAllClocks();
+                }, 1000);
+
+                // Update meeting insights every 30 minutes
+                setInterval(() => {
+                    this.updateTimezoneInsights();
+                }, 30 * 60 * 1000);
+            }
+        }
+
+        // Initialize the clock system
+        document.addEventListener('DOMContentLoaded', function() {
+            const clockSync = new ClockSync();
+            
+            console.log('CLOCK.SYNC v1.0 - TERMINAL TIME AWARENESS SYSTEM');
+            console.log('System initialized successfully...');
+            console.log('Global time synchronization active');
+            console.log('Meeting coordination assistant loaded');
+        });
+    </script>
+
+    <div class="return-terminal-wrapper">
+        <a href="index.html" class="return-terminal-btn">Return to Terminal</a>
+    </div>
+    <div class="terminal-footer-block">
+        <div class="matrix-cursor">CLOCK MODULE READY</div>
+        <div class="terminal-footer-version">PRODUCTIVITY.SUITE.v2.1 | MATRIX.AESTHETIC | WEB.NATIVE</div>
+    </div>
+</body>
+</html>

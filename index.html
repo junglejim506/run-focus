@@ -181,6 +181,34 @@
             z-index: -1;
             opacity: 0.1;
         }
+        .terminal-footer-block {
+            text-align: center;
+            margin-top: 30px;
+            margin-bottom: 8px;
+            opacity: 0.6;
+            font-size: 0.8rem;
+        }
+        .matrix-cursor {
+            display: inline-block;
+            font-family: 'Orbitron', monospace;
+            color: #00ff41;
+            letter-spacing: 2px;
+            margin-bottom: 2px;
+        }
+        .matrix-cursor::after {
+            content: '_';
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        .terminal-footer-version {
+            margin-top: 8px;
+            color: #00ff41;
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 1.5px;
+        }
     </style>
 </head>
 <body>
@@ -210,23 +238,63 @@
             </div>
             <div class="terminal-window">
                 <div class="terminal-header">
-                    <span>TOOLKIT</span>
+                    <span>BREAK.EXE</span>
                 </div>
                 <div class="terminal-content">
-                    <a class="terminal-link" href="#">Coming Soon</a>
-                    <div class="terminal-desc">More productivity tools will be added here.</div>
+                    <a class="terminal-link" href="break.html">Break Timer</a>
+                    <div class="terminal-desc">Guided breaks to rest your mind and body.</div>
                 </div>
             </div>
             <div class="terminal-window">
                 <div class="terminal-header">
-                    <span>NOTES</span>
+                    <span>BREATH.EXE</span>
                 </div>
                 <div class="terminal-content">
-                    <a class="terminal-link" href="#">Coming Soon</a>
-                    <div class="terminal-desc">A fast, terminal-style notes app for quick capture.</div>
+                    <a class="terminal-link" href="breath.html">Breathing Coach</a>
+                    <div class="terminal-desc">Breathing exercises for focus and relaxation.</div>
+                </div>
+            </div>
+            <div class="terminal-window">
+                <div class="terminal-header">
+                    <span>AMBIENT.EXE</span>
+                </div>
+                <div class="terminal-content">
+                    <a class="terminal-link" href="ambient.html">Ambient Sounds</a>
+                    <div class="terminal-desc">Background soundscapes for productivity.</div>
+                </div>
+            </div>
+            <div class="terminal-window">
+                <div class="terminal-header">
+                    <span>CLOCK.EXE</span>
+                </div>
+                <div class="terminal-content">
+                    <a class="terminal-link" href="clock.html">Clock & Alarms</a>
+                    <div class="terminal-desc">Terminal-style clock and simple alarms.</div>
+                </div>
+            </div>
+            <div class="terminal-window">
+                <div class="terminal-header">
+                    <span>WATER.EXE</span>
+                </div>
+                <div class="terminal-content">
+                    <a class="terminal-link" href="water.html">Water Tracker</a>
+                    <div class="terminal-desc">Track your daily water intake.</div>
+                </div>
+            </div>
+            <div class="terminal-window">
+                <div class="terminal-header">
+                    <span>ABOUT.TXT</span>
+                </div>
+                <div class="terminal-content">
+                    <a class="terminal-link" href="about.html">About Suite</a>
+                    <div class="terminal-desc">Learn more about this terminal productivity suite.</div>
                 </div>
             </div>
         </div>
+    </div>
+    <div class="terminal-footer-block">
+        <div class="matrix-cursor">TERMINAL READY</div>
+        <div class="terminal-footer-version">PRODUCTIVITY.SUITE.v2.1 | MATRIX.AESTHETIC | WEB.NATIVE</div>
     </div>
 </body>
 </html>

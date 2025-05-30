@@ -620,6 +620,34 @@
             color: #00ff41;
             box-shadow: 0 0 18px #00ff41, 0 0 6px #00ff41 inset;
         }
+        .terminal-footer-block {
+            text-align: center;
+            margin-top: 30px;
+            margin-bottom: 8px;
+            opacity: 0.6;
+            font-size: 0.8rem;
+        }
+        .matrix-cursor {
+            display: inline-block;
+            font-family: 'Orbitron', monospace;
+            color: #00ff41;
+            letter-spacing: 2px;
+            margin-bottom: 2px;
+        }
+        .matrix-cursor::after {
+            content: '_';
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        .terminal-footer-version {
+            margin-top: 8px;
+            color: #00ff41;
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 1.5px;
+        }
     </style>
 </head>
 <body>
@@ -1171,6 +1199,10 @@
     </script>
     <div class="return-terminal-wrapper">
         <a href="index.html" class="return-terminal-btn">Return to Terminal</a>
+    </div>
+    <div class="terminal-footer-block">
+        <div class="matrix-cursor">FOCUS MODULE READY</div>
+        <div class="terminal-footer-version">PRODUCTIVITY.SUITE.v2.1 | MATRIX.AESTHETIC | WEB.NATIVE</div>
     </div>
 </body>
 </html>

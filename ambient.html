@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMBIENT.GEN - Terminal Environment Sound Generator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Courier+Prime:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier Prime', monospace;
+            background: #0a0a0a;
+            color: #00ff41;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 255, 65, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 255, 65, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(0, 255, 65, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 787.5px;
+            margin: 7.5px auto;
+            padding: 15px 1vw;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border: 2px solid #00ff41;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            box-shadow: 
+                0 0 11px rgba(0, 255, 65, 0.3),
+                inset 0 0 11px rgba(0, 255, 65, 0.1);
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 6px;
+            text-shadow: 
+                0 0 6px #00ff41,
+                0 0 10px #00ff41,
+                0 0 13px #00ff41;
+            letter-spacing: 1.5px;
+        }
+
+        .header p {
+            font-size: 0.7rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #00ff41;
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 22.5px;
+            margin-bottom: 22.5px;
+        }
+
+        .terminal-window {
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #00ff41;
+            border-radius: 8px;
+            padding: 0;
+            box-shadow: 
+                0 0 16.5px rgba(0, 255, 65, 0.4),
+                inset 0 0 16.5px rgba(0, 255, 65, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            background: #00ff41;
+            color: #000;
+            padding: 6px 11px;
+            font-weight: bold;
+            font-size: 0.68rem;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.75px;
+        }
+
+        .terminal-header::before {
+            content: '●●●';
+            color: #000;
+            font-size: 1.2rem;
+        }
+
+        .terminal-content {
+            padding: 18px;
+            min-height: 400px;
+        }
+
+        .terminal-prompt {
+            color: #00ff41;
+            font-weight: bold;
+            margin-bottom: 11.25px;
+            font-size: 0.825rem;
+        }
+
+        .terminal-prompt::before {
+            content: '> ';
+            color: #00ff41;
+        }
+
+        /* Sound Category Styles */
+        .sound-category {
+            margin-bottom: 20px;
+        }
+
+        .category-title {
+            color: #00ff41;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.75px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .sound-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .sound-btn {
+            background: transparent;
+            border: 1px solid rgba(0, 255, 65, 0.5);
+            color: #00ff41;
+            padding: 8px 6px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.65rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+        }
+
+        .sound-btn:hover {
+            border-color: #00ff41;
+            background: rgba(0, 255, 65, 0.1);
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+        }
+
+        .sound-btn.active {
+            background: rgba(0, 255, 65, 0.2);
+            border-color: #00ff41;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.4);
+        }
+
+        .sound-btn.playing::after {
+            content: '●';
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            color: #ff0000;
+            font-size: 0.8rem;
+            animation: pulse 1s infinite;
+        }
+
+        /* Volume Controls */
+        .volume-section {
+            margin-top: 20px;
+        }
+
+        .volume-control {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .volume-label {
+            font-size: 0.7rem;
+            color: #00ff41;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .volume-value {
+            font-weight: bold;
+            color: #00ff41;
+            text-shadow: 0 0 5px #00ff41;
+        }
+
+        .terminal-slider {
+            width: 100%;
+            height: 4px;
+            background: rgba(0, 255, 65, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+            border-radius: 0;
+        }
+
+        .terminal-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #00ff41;
+            cursor: pointer;
+            border-radius: 0;
+            box-shadow: 0 0 8px rgba(0, 255, 65, 0.6);
+        }
+
+        .terminal-slider::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            background: #00ff41;
+            cursor: pointer;
+            border: none;
+            border-radius: 0;
+            box-shadow: 0 0 8px rgba(0, 255, 65, 0.6);
+        }
+
+        /* Master Controls */
+        .master-controls {
+            grid-column: 1 / -1;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .master-volume {
+            flex: 1;
+        }
+
+        .master-btn {
+            background: transparent;
+            border: 2px solid #00ff41;
+            color: #00ff41;
+            padding: 10px 20px;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            transition: all 0.3s ease;
+        }
+
+        .master-btn:hover {
+            background: #00ff41;
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.8);
+        }
+
+        .master-btn.playing {
+            background: #ff0000;
+            border-color: #ff0000;
+            color: #fff;
+        }
+
+        .master-btn.playing:hover {
+            background: #ff0000;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+        }
+
+        /* Presets */
+        .presets-section {
+            margin-top: 20px;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .preset-btn {
+            background: transparent;
+            border: 1px solid rgba(0, 255, 65, 0.7);
+            color: #00ff41;
+            padding: 10px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.75rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .preset-btn:hover {
+            border-color: #00ff41;
+            background: rgba(0, 255, 65, 0.1);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+        }
+
+        /* Status Display */
+        .status-display {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            padding: 12px;
+            margin-top: 15px;
+            font-size: 0.7rem;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .status-line {
+            margin-bottom: 4px;
+            opacity: 0.8;
+        }
+
+        .status-line:last-child {
+            opacity: 1;
+            color: #00ff41;
+        }
+
+        .status-line::before {
+            content: '$ ';
+            color: #00ff41;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #00ff41;
+            border-radius: 0;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 65, 0.8);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .app-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .sound-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .preset-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .control-row {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+        /* Animations */
+        .glow {
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41, 0 0 15px #00ff41;
+            }
+            to {
+                text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41, 0 0 30px #00ff41;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .return-terminal-wrapper {
+            display: flex;
+            justify-content: center;
+            margin: 24px 0 6px 0;
+        }
+        .return-terminal-btn {
+            background: #00ff41;
+            color: #000;
+            border: 2px solid #00ff41;
+            font-family: 'Orbitron', monospace;
+            font-weight: bold;
+            font-size: 1rem;
+            padding: 8px 28px;
+            border-radius: 6px;
+            text-decoration: none;
+            letter-spacing: 1.5px;
+            box-shadow: 0 0 12px #00ff41, 0 0 4px #00ff41 inset;
+            transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+        }
+        .return-terminal-btn:hover {
+            background: #000;
+            color: #00ff41;
+            box-shadow: 0 0 18px #00ff41, 0 0 6px #00ff41 inset;
+        }
+        .terminal-footer-block {
+            text-align: center;
+            margin-top: 30px;
+            margin-bottom: 8px;
+            opacity: 0.6;
+            font-size: 0.8rem;
+        }
+        .matrix-cursor {
+            display: inline-block;
+            font-family: 'Orbitron', monospace;
+            color: #00ff41;
+            letter-spacing: 2px;
+            margin-bottom: 2px;
+        }
+        .matrix-cursor::after {
+            content: '_';
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        .terminal-footer-version {
+            margin-top: 8px;
+            color: #00ff41;
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 1.5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="glow">AMBIENT.GEN</h1>
+            <p>[ TERMINAL ENVIRONMENT SOUND GENERATOR v1.4 ]</p>
+        </div>
+
+        <div class="app-grid">
+            <!-- Nature Sounds -->
+            <div class="terminal-window">
+                <div class="terminal-header">
+                    <span>NATURE.SYS</span>
+                </div>
+                <div class="terminal-content">
+                    <div class="terminal-prompt">NATURAL ENVIRONMENT AUDIO</div>
+                    
+                    <div class="sound-category">
+                        <div class="category-title">[ WEATHER PATTERNS ]</div>
+                        <div class="sound-grid">
+                            <button class="sound-btn" data-sound="rain" data-category="nature">RAIN</button>
+                            <button class="sound-btn" data-sound="thunder" data-category="nature">THUNDER</button>
+                            <button class="sound-btn" data-sound="wind" data-category="nature">WIND</button>
+                            <button class="sound-btn" data-sound="storm" data-category="nature">STORM</button>
+                        </div>
+                    </div>
+
+                    <div class="sound-category">
+                        <div class="category-title">[ WATER SOURCES ]</div>
+                        <div class="sound-grid">
+                            <button class="sound-btn" data-sound="ocean" data-category="nature">OCEAN</button>
+                            <button class="sound-btn" data-sound="stream" data-category="nature">STREAM</button>
+                            <button class="sound-btn" data-sound="waterfall" data-category="nature">WATERFALL</button>
+                            <button class="sound-btn" data-sound="lake" data-category="nature">LAKE</button>
+                        </div>
+                    </div>
+
+                    <div class="sound-category">
+                        <div class="category-title">[ FOREST AMBIENCE ]</div>
+                        <div class="sound-grid">
+                            <button class="sound-btn" data-sound="birds" data-category="nature">BIRDS</button>
+                            <button class="sound-btn" data-sound="crickets" data-category="nature">CRICKETS</button>
+                            <button class="sound-btn" data-sound="leaves" data-category="nature">LEAVES</button>
+                            <button class="sound-btn" data-sound="campfire" data-category="nature">CAMPFIRE</button>
+                        </div>
+                    </div>
+
+                    <div class="volume-section">
+                        <div class="volume-control">
+                            <div class="volume-label">
+                                <span>NATURE VOL</span>
+                                <span class="volume-value" id="natureVolume">50%</span>
+                            </div>
+                            <input type="range" class="terminal-slider" id="natureVolumeSlider" min="0" max="100" value="50">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Urban & Workspace Sounds -->
+            <div class="terminal-window">
+                <div class="terminal-header">
+                    <span>URBAN.SYS</span>
+                </div>
+                <div class="terminal-content">
+                    <div class="terminal-prompt">URBAN ENVIRONMENT AUDIO</div>
+                    
+                    <div class="sound-category">
+                        <div class="category-title">[ WORKSPACE AMBIENCE ]</div>
+                        <div class="sound-grid">
+                            <button class="sound-btn" data-sound="coffeeshop" data-category="urban">COFFEE SHOP</button>
+                            <button class="sound-btn" data-sound="library" data-category="urban">LIBRARY</button>
+                            <button class="sound-btn" data-sound="keyboard" data-category="urban">KEYBOARD</button>
+                            <button class="sound-btn" data-sound="office" data-category="urban">OFFICE</button>
+                        </div>
+                    </div>
+
+                    <div class="sound-category">
+                        <div class="category-title">[ CITY SOUNDS ]</div>
+                        <div class="sound-grid">
+                            <button class="sound-btn" data-sound="traffic" data-category="urban">TRAFFIC</button>
+                            <button class="sound-btn" data-sound="subway" data-category="urban">SUBWAY</button>
+                            <button class="sound-btn" data-sound="street" data-category="urban">STREET</button>
+                            <button class="sound-btn" data-sound="park" data-category="urban">CITY PARK</button>
+                        </div>
+                    </div>
+
+                    <div class="sound-category">
+                        <div class="category-title">[ WHITE NOISE ]</div>
+                        <div class="sound-grid">
+                            <button class="sound-btn" data-sound="whitenoise" data-category="urban">WHITE</button>
+                            <button class="sound-btn" data-sound="pinknoise" data-category="urban">PINK</button>
+                            <button class="sound-btn" data-sound="brownnoise" data-category="urban">BROWN</button>
+                            <button class="sound-btn" data-sound="fan" data-category="urban">FAN</button>
+                        </div>
+                    </div>
+
+                    <div class="volume-section">
+                        <div class="volume-control">
+                            <div class="volume-label">
+                                <span>URBAN VOL</span>
+                                <span class="volume-value" id="urbanVolume">50%</span>
+                            </div>
+                            <input type="range" class="terminal-slider" id="urbanVolumeSlider" min="0" max="100" value="50">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Master Controls -->
+            <div class="terminal-window master-controls">
+                <div class="terminal-header">
+                    <span>CONTROL.SYS</span>
+                </div>
+                <div class="terminal-content">
+                    <div class="terminal-prompt">MASTER AUDIO CONTROL</div>
+                    
+                    <div class="control-row">
+                        <div class="master-volume">
+                            <div class="volume-control">
+                                <div class="volume-label">
+                                    <span>MASTER VOLUME</span>
+                                    <span class="volume-value" id="masterVolume">75%</span>
+                                </div>
+                                <input type="range" class="terminal-slider" id="masterVolumeSlider" min="0" max="100" value="75">
+                            </div>
+                        </div>
+                        <button class="master-btn" id="masterPlayBtn">► INITIATE AMBIENT</button>
+                    </div>
+
+                    <div class="presets-section">
+                        <div class="category-title">[ ENVIRONMENT PRESETS ]</div>
+                        <div class="preset-grid">
+                            <button class="preset-btn" data-preset="focus">DEEP FOCUS</button>
+                            <button class="preset-btn" data-preset="relax">RELAXATION</button>
+                            <button class="preset-btn" data-preset="creative">CREATIVE FLOW</button>
+                            <button class="preset-btn" data-preset="sleep">SLEEP MODE</button>
+                        </div>
+                    </div>
+
+                    <div class="status-display" id="statusDisplay">
+                        <div class="status-line">AMBIENT.GEN v1.4 initialized</div>
+                        <div class="status-line">Audio subsystems loaded</div>
+                        <div class="status-line">Ready for sound generation</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class AmbientGenerator {
+            constructor() {
+                this.audioContext = null;
+                this.sounds = {};
+                this.isPlaying = false;
+                this.masterVolume = 0.75;
+                this.categoryVolumes = {
+                    nature: 0.5,
+                    urban: 0.5
+                };
+                this.activeSounds = new Set();
+                this.statusLog = ['AMBIENT.GEN v1.4 initialized', 'Audio subsystems loaded', 'Ready for sound generation'];
+
+                this.initializeElements();
+                this.createAudioSources();
+                this.updateStatus();
+            }
+
+            initializeElements() {
+                // Sound buttons
+                this.soundBtns = document.querySelectorAll('.sound-btn');
+                this.masterPlayBtn = document.getElementById('masterPlayBtn');
+                this.presetBtns = document.querySelectorAll('.preset-btn');
+
+                // Volume controls
+                this.masterVolumeSlider = document.getElementById('masterVolumeSlider');
+                this.natureVolumeSlider = document.getElementById('natureVolumeSlider');
+                this.urbanVolumeSlider = document.getElementById('urbanVolumeSlider');
+
+                // Volume displays
+                this.masterVolumeDisplay = document.getElementById('masterVolume');
+                this.natureVolumeDisplay = document.getElementById('natureVolume');
+                this.urbanVolumeDisplay = document.getElementById('urbanVolume');
+
+                // Status display
+                this.statusDisplay = document.getElementById('statusDisplay');
+
+                this.attachEventListeners();
+            }
+
+            attachEventListeners() {
+                // Sound buttons
+                this.soundBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const soundName = e.target.dataset.sound;
+                        this.toggleSound(soundName, e.target);
+                    });
+                });
+
+                // Master play button
+                this.masterPlayBtn.addEventListener('click', () => {
+                    this.toggleMasterPlayback();
+                });
+
+                // Volume sliders
+                this.masterVolumeSlider.addEventListener('input', (e) => {
+                    this.masterVolume = e.target.value / 100;
+                    this.masterVolumeDisplay.textContent = `${e.target.value}%`;
+                    this.updateAllVolumes();
+                });
+
+                this.natureVolumeSlider.addEventListener('input', (e) => {
+                    this.categoryVolumes.nature = e.target.value / 100;
+                    this.natureVolumeDisplay.textContent = `${e.target.value}%`;
+                    this.updateCategoryVolume('nature');
+                });
+
+                this.urbanVolumeSlider.addEventListener('input', (e) => {
+                    this.categoryVolumes.urban = e.target.value / 100;
+                    this.urbanVolumeDisplay.textContent = `${e.target.value}%`;
+                    this.updateCategoryVolume('urban');
+                });
+
+                // Preset buttons
+                this.presetBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.loadPreset(e.target.dataset.preset);
+                    });
+                });
+            }
+
+            async createAudioSources() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    
+                    // Create audio sources for each sound type
+                    const soundTypes = [
+                        // Nature sounds
+                        'rain', 'thunder', 'wind', 'storm', 'ocean', 'stream', 'waterfall', 'lake',
+                        'birds', 'crickets', 'leaves', 'campfire',
+                        // Urban sounds
+                        'coffeeshop', 'library', 'keyboard', 'office', 'traffic', 'subway', 'street', 'park',
+                        'whitenoise', 'pinknoise', 'brownnoise', 'fan'
+                    ];
+
+                    soundTypes.forEach(soundType => {
+                        this.sounds[soundType] = this.createSoundSource(soundType);
+                    });
+
+                    this.logStatus('Audio sources created successfully');
+                } catch (error) {
+                    console.error('Error creating audio sources:', error);
+                    this.logStatus('Error: Audio initialization failed');
+                }
+            }
+
+            createSoundSource(soundType) {
+                // Create different types of generated sounds based on the sound type
+                const soundConfig = this.getSoundConfig(soundType);
+                
+                return {
+                    oscillators: [],
+                    gainNode: this.audioContext.createGain(),
+                    config: soundConfig,
+                    isPlaying: false
+                };
+            }
+
+            getSoundConfig(soundType) {
+                // Define audio characteristics for each sound type
+                const configs = {
+                    // Nature - Weather
+                    rain: { type: 'noise', filter: 'lowpass', cutoff: 2000, volume: 0.3 },
+                    thunder: { type: 'burst', frequency: 60, volume: 0.4 },
+                    wind: { type: 'noise', filter: 'bandpass', cutoff: 500, volume: 0.25 },
+                    storm: { type: 'complex', frequencies: [80, 200, 1000], volume: 0.35 },
+                    
+                    // Nature - Water
+                    ocean: { type: 'noise', filter: 'lowpass', cutoff: 800, volume: 0.3 },
+                    stream: { type: 'noise', filter: 'bandpass', cutoff: 1500, volume: 0.25 },
+                    waterfall: { type: 'noise', filter: 'highpass', cutoff: 1000, volume: 0.3 },
+                    lake: { type: 'sine', frequency: 100, volume: 0.15 },
+                    
+                    // Nature - Forest
+                    birds: { type: 'complex', frequencies: [800, 1200, 2000], volume: 0.2 },
+                    crickets: { type: 'pulse', frequency: 3000, volume: 0.2 },
+                    leaves: { type: 'noise', filter: 'highpass', cutoff: 2000, volume: 0.15 },
+                    campfire: { type: 'noise', filter: 'lowpass', cutoff: 400, volume: 0.25 },
+                    
+                    // Urban - Workspace
+                    coffeeshop: { type: 'complex', frequencies: [200, 400, 800], volume: 0.2 },
+                    library: { type: 'noise', filter: 'lowpass', cutoff: 300, volume: 0.1 },
+                    keyboard: { type: 'pulse', frequency: 2000, volume: 0.15 },
+                    office: { type: 'noise', filter: 'bandpass', cutoff: 600, volume: 0.2 },
+                    
+                    // Urban - City
+                    traffic: { type: 'noise', filter: 'lowpass', cutoff: 500, volume: 0.3 },
+                    subway: { type: 'complex', frequencies: [100, 300, 600], volume: 0.25 },
+                    street: { type: 'noise', filter: 'bandpass', cutoff: 800, volume: 0.2 },
+                    park: { type: 'complex', frequencies: [400, 800, 1600], volume: 0.2 },
+                    
+                    // Urban - White Noise
+                    whitenoise: { type: 'noise', filter: 'none', volume: 0.3 },
+                    pinknoise: { type: 'noise', filter: 'lowpass', cutoff: 1000, volume: 0.3 },
+                    brownnoise: { type: 'noise', filter: 'lowpass', cutoff: 500, volume: 0.3 },
+                    fan: { type: 'noise', filter: 'lowpass', cutoff: 200, volume: 0.25 }
+                };
+
+                return configs[soundType] || { type: 'sine', frequency: 440, volume: 0.2 };
+            }
+
+            toggleSound(soundName, buttonElement) {
+                if (this.activeSounds.has(soundName)) {
+                    this.stopSound(soundName);
+                    buttonElement.classList.remove('active', 'playing');
+                    this.logStatus(`${soundName.toUpperCase()} sound stopped`);
+                } else {
+                    this.startSound(soundName);
+                    buttonElement.classList.add('active', 'playing');
+                    this.logStatus(`${soundName.toUpperCase()} sound started`);
+                }
+            }
+
+            startSound(soundName) {
+                if (!this.audioContext) return;
+
+                const sound = this.sounds[soundName];
+                if (!sound || sound.isPlaying) return;
+
+                const config = sound.config;
+                sound.gainNode = this.audioContext.createGain();
+                sound.gainNode.connect(this.audioContext.destination);
+
+                // Set initial volume
+                const category = this.getSoundCategory(soundName);
+                const volume = config.volume * this.categoryVolumes[category] * this.masterVolume;
+                sound.gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+
+                // Create sound based on type
+                if (config.type === 'noise') {
+                    this.createNoiseSound(sound, config);
+                } else if (config.type === 'complex') {
+                    this.createComplexSound(sound, config);
+                } else if (config.type === 'pulse') {
+                    this.createPulseSound(sound, config);
+                } else if (config.type === 'burst') {
+                    this.createBurstSound(sound, config);
+                } else {
+                    this.createSineSound(sound, config);
+                }
+
+                sound.isPlaying = true;
+                this.activeSounds.add(soundName);
+            }
+
+            createNoiseSound(sound, config) {
+                // Create white noise using buffer
+                const bufferSize = this.audioContext.sampleRate * 2;
+                const noiseBuffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+
+                const whiteNoise = this.audioContext.createBufferSource();
+                whiteNoise.buffer = noiseBuffer;
+                whiteNoise.loop = true;
+
+                // Apply filter if specified
+                if (config.filter && config.filter !== 'none') {
+                    const filter = this.audioContext.createBiquadFilter();
+                    filter.type = config.filter;
+                    filter.frequency.setValueAtTime(config.cutoff || 1000, this.audioContext.currentTime);
+                    
+                    whiteNoise.connect(filter);
+                    filter.connect(sound.gainNode);
+                } else {
+                    whiteNoise.connect(sound.gainNode);
+                }
+
+                whiteNoise.start();
+                sound.oscillators.push(whiteNoise);
+            }
+
+            createComplexSound(sound, config) {
+                config.frequencies.forEach((freq, index) => {
+                    const oscillator = this.audioContext.createOscillator();
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+                    
+                    // Add slight detuning for more natural sound
+                    const detune = (Math.random() - 0.5) * 20;
+                    oscillator.detune.setValueAtTime(detune, this.audioContext.currentTime);
+                    
+                    // Create individual gain for each oscillator
+                    const oscGain = this.audioContext.createGain();
+                    oscGain.gain.setValueAtTime(0.3 / config.frequencies.length, this.audioContext.currentTime);
+                    
+                    oscillator.connect(oscGain);
+                    oscGain.connect(sound.gainNode);
+                    oscillator.start();
+                    
+                    sound.oscillators.push(oscillator);
+                });
+            }
+
+            createPulseSound(sound, config) {
+                const oscillator = this.audioContext.createOscillator();
+                oscillator.type = 'square';
+                oscillator.frequency.setValueAtTime(config.frequency, this.audioContext.currentTime);
+                
+                // Create pulsing effect
+                const pulseGain = this.audioContext.createGain();
+                pulseGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+                
+                // Pulse pattern
+                const pulseInterval = setInterval(() => {
+                    if (sound.isPlaying) {
+                        const now = this.audioContext.currentTime;
+                        pulseGain.gain.setValueAtTime(0.5, now);
+                        pulseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    } else {
+                        clearInterval(pulseInterval);
+                    }
+                }, 200 + Math.random() * 300);
+                
+                oscillator.connect(pulseGain);
+                pulseGain.connect(sound.gainNode);
+                oscillator.start();
+                
+                sound.oscillators.push(oscillator);
+            }
+
+            createBurstSound(sound, config) {
+                // Create random bursts (like thunder)
+                const burstInterval = setInterval(() => {
+                    if (sound.isPlaying && Math.random() < 0.1) { // 10% chance per interval
+                        const oscillator = this.audioContext.createOscillator();
+                        const burstGain = this.audioContext.createGain();
+                        
+                        oscillator.type = 'sawtooth';
+                        oscillator.frequency.setValueAtTime(config.frequency + Math.random() * 40, this.audioContext.currentTime);
+                        
+                        const now = this.audioContext.currentTime;
+                        burstGain.gain.setValueAtTime(0, now);
+                        burstGain.gain.linearRampToValueAtTime(0.8, now + 0.01);
+                        burstGain.gain.exponentialRampToValueAtTime(0.01, now + 0.5 + Math.random() * 2);
+                        
+                        oscillator.connect(burstGain);
+                        burstGain.connect(sound.gainNode);
+                        oscillator.start(now);
+                        oscillator.stop(now + 3);
+                    }
+                }, 1000);
+                
+                sound.burstInterval = burstInterval;
+            }
+
+            createSineSound(sound, config) {
+                const oscillator = this.audioContext.createOscillator();
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(config.frequency, this.audioContext.currentTime);
+                
+                // Add subtle frequency modulation
+                const lfo = this.audioContext.createOscillator();
+                const lfoGain = this.audioContext.createGain();
+                lfo.frequency.setValueAtTime(0.1, this.audioContext.currentTime);
+                lfoGain.gain.setValueAtTime(5, this.audioContext.currentTime);
+                
+                lfo.connect(lfoGain);
+                lfoGain.connect(oscillator.frequency);
+                
+                oscillator.connect(sound.gainNode);
+                oscillator.start();
+                lfo.start();
+                
+                sound.oscillators.push(oscillator, lfo);
+            }
+
+            stopSound(soundName) {
+                const sound = this.sounds[soundName];
+                if (!sound || !sound.isPlaying) return;
+
+                // Stop all oscillators
+                sound.oscillators.forEach(osc => {
+                    try {
+                        osc.stop();
+                    } catch (e) {
+                        // Oscillator might already be stopped
+                    }
+                });
+
+                // Clear burst interval if it exists
+                if (sound.burstInterval) {
+                    clearInterval(sound.burstInterval);
+                    delete sound.burstInterval;
+                }
+
+                sound.oscillators = [];
+                sound.isPlaying = false;
+                this.activeSounds.delete(soundName);
+            }
+
+            getSoundCategory(soundName) {
+                const natureSounds = ['rain', 'thunder', 'wind', 'storm', 'ocean', 'stream', 'waterfall', 'lake', 'birds', 'crickets', 'leaves', 'campfire'];
+                return natureSounds.includes(soundName) ? 'nature' : 'urban';
+            }
+
+            updateCategoryVolume(category) {
+                Object.keys(this.sounds).forEach(soundName => {
+                    if (this.getSoundCategory(soundName) === category && this.sounds[soundName].isPlaying) {
+                        const config = this.sounds[soundName].config;
+                        const volume = config.volume * this.categoryVolumes[category] * this.masterVolume;
+                        this.sounds[soundName].gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+                    }
+                });
+            }
+
+            updateAllVolumes() {
+                Object.keys(this.sounds).forEach(soundName => {
+                    if (this.sounds[soundName].isPlaying) {
+                        const category = this.getSoundCategory(soundName);
+                        const config = this.sounds[soundName].config;
+                        const volume = config.volume * this.categoryVolumes[category] * this.masterVolume;
+                        this.sounds[soundName].gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+                    }
+                });
+            }
+
+            toggleMasterPlayback() {
+                if (this.isPlaying) {
+                    this.stopAllSounds();
+                    this.isPlaying = false;
+                    this.masterPlayBtn.textContent = '► INITIATE AMBIENT';
+                    this.masterPlayBtn.classList.remove('playing');
+                    this.logStatus('All ambient sounds stopped');
+                } else {
+                    this.isPlaying = true;
+                    this.masterPlayBtn.textContent = '◼ TERMINATE AMBIENT';
+                    this.masterPlayBtn.classList.add('playing');
+                    this.logStatus('Ambient system activated');
+                }
+            }
+
+            stopAllSounds() {
+                this.activeSounds.forEach(soundName => {
+                    this.stopSound(soundName);
+                    const button = document.querySelector(`[data-sound="${soundName}"]`);
+                    if (button) {
+                        button.classList.remove('active', 'playing');
+                    }
+                });
+                this.activeSounds.clear();
+            }
+
+            loadPreset(presetName) {
+                const presets = {
+                    focus: {
+                        sounds: ['rain', 'coffeeshop', 'whitenoise'],
+                        volumes: { nature: 30, urban: 40, master: 70 }
+                    },
+                    relax: {
+                        sounds: ['ocean', 'birds', 'wind'],
+                        volumes: { nature: 60, urban: 20, master: 60 }
+                    },
+                    creative: {
+                        sounds: ['stream', 'library', 'pinknoise'],
+                        volumes: { nature: 40, urban: 30, master: 65 }
+                    },
+                    sleep: {
+                        sounds: ['rain', 'ocean', 'brownnoise'],
+                        volumes: { nature: 50, urban: 30, master: 40 }
+                    }
+                };
+
+                const preset = presets[presetName];
+                if (!preset) return;
+
+                // Stop all current sounds
+                this.stopAllSounds();
+
+                // Set volumes
+                this.masterVolumeSlider.value = preset.volumes.master;
+                this.masterVolume = preset.volumes.master / 100;
+                this.masterVolumeDisplay.textContent = `${preset.volumes.master}%`;
+
+                this.natureVolumeSlider.value = preset.volumes.nature;
+                this.categoryVolumes.nature = preset.volumes.nature / 100;
+                this.natureVolumeDisplay.textContent = `${preset.volumes.nature}%`;
+
+                this.urbanVolumeSlider.value = preset.volumes.urban;
+                this.categoryVolumes.urban = preset.volumes.urban / 100;
+                this.urbanVolumeDisplay.textContent = `${preset.volumes.urban}%`;
+
+                // Start preset sounds
+                setTimeout(() => {
+                    preset.sounds.forEach(soundName => {
+                        const button = document.querySelector(`[data-sound="${soundName}"]`);
+                        if (button) {
+                            this.startSound(soundName);
+                            button.classList.add('active', 'playing');
+                        }
+                    });
+                }, 100);
+
+                this.logStatus(`${presetName.toUpperCase()} preset loaded`);
+            }
+
+            logStatus(message) {
+                this.statusLog.push(message);
+                if (this.statusLog.length > 8) {
+                    this.statusLog.shift();
+                }
+                this.updateStatus();
+            }
+
+            updateStatus() {
+                this.statusDisplay.innerHTML = this.statusLog
+                    .map(log => `<div class="status-line">${log}</div>`)
+                    .join('');
+            }
+        }
+
+        // Initialize the ambient generator
+        document.addEventListener('DOMContentLoaded', function() {
+            const ambientGenerator = new AmbientGenerator();
+            
+            console.log('AMBIENT.GEN v1.4 - TERMINAL ENVIRONMENT SOUND GENERATOR');
+            console.log('System initialized successfully...');
+            console.log('All audio modules loaded and ready for operation.');
+        });
+    </script>
+
+    <div class="return-terminal-wrapper">
+        <a href="index.html" class="return-terminal-btn">Return to Terminal</a>
+    </div>
+    <div class="terminal-footer-block">
+        <div class="matrix-cursor">AMBIENT MODULE READY</div>
+        <div class="terminal-footer-version">PRODUCTIVITY.SUITE.v2.1 | MATRIX.AESTHETIC | WEB.NATIVE</div>
+    </div>
+</body>
+</html>
